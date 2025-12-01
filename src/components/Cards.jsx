@@ -1,33 +1,16 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
-export function Pokemon({ id, setPokemons, setGameState }) {
-  const [pokemon, setPokemon] = useState(null);
+export function Pokemon({ pokemon, setPokemons, setGameState, onImageLoad, showImage }) {
   const [imageLoaded, setImageLoaded] = useState(false);
 
-  useEffect(() => {
-    fetch(`https://pokeapi.co/api/v2/pokemon/${id}`)
-      .then((res) => res.json())
-      .then((data) => setPokemon(data));
-  }, [id]);
-
-  if (!pokemon) {
-    return (
-      <div className="card">
-        <button>{/* <p>Loading...</p> */}</button>
-      </div>
-    );
-  }
-
-  // console.log(pokemon);
-
   function handleClick() {
-    console.log(`Clicked ${pokemon.name} with ID: ${id}`);
+    console.log(`Clicked ${pokemon.data.name} with ID: ${pokemon.id}`);
     let gameOver = false;
     let hasWon = false;
 
     setPokemons((prev) => {
       const updatedPokemons = prev.map((item) => {
-        if (item.id === id) {
+        if (item.id === pokemon.id) {
           if (item.clicked === true) {
             setGameState("gameOver");
             gameOver = true;
@@ -64,21 +47,28 @@ export function Pokemon({ id, setPokemons, setGameState }) {
     return shuffled;
   }
 
+  const handleImageLoadComplete = () => {
+    if (!imageLoaded) {
+      setImageLoaded(true);
+      onImageLoad();
+    }
+  };
+
   return (
     <div className="card">
       <button onClick={handleClick}>
         <img
-          src={pokemon.sprites.front_default}
-          alt={pokemon.name}
+          src={pokemon.data.sprites.front_default}
+          alt={pokemon.data.name}
           style={{
             width: "192px",
             height: "192px",
-            opacity: imageLoaded ? 1 : 0,
+            opacity: showImage && imageLoaded ? 1 : 0,
             transition: "opacity 0.5s ease",
           }}
-          onLoad={() => setImageLoaded(true)}
+          onLoad={handleImageLoadComplete}
         />
-        <h2>{pokemon.name}</h2>
+        <h2>{pokemon.data.name}</h2>
       </button>
     </div>
   );

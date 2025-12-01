@@ -1,8 +1,10 @@
 import { Pokemon } from "./Cards.jsx";
 import { Score } from "./Score.jsx";
 import { Modal } from "./Modal.jsx";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
+// Generates an array of unique random IDs within a range
+// Used to select random Pokemon from the API (1-386 are Gen 1-3 Pokemon)
 function generateUniqueIds(count, max) {
   const ids = new Set();
   while (ids.size < count) {
@@ -12,52 +14,123 @@ function generateUniqueIds(count, max) {
 }
 
 function MainContent() {
-  const pokemonsCount = 12;
+  const pokemonsCount = 12; // Total number of Pokemon cards in the game
 
+  // Creates initial state structure for pokemon array
+  // Each pokemon starts with an ID, clicked status, and null data (to be fetched)
   const generateInitialState = () => {
     const uniqueIds = generateUniqueIds(pokemonsCount, 386);
     return uniqueIds.map((id) => ({
       id: id,
       clicked: false,
+      data: null,
     }));
   };
 
-  const [pokemons, setPokemons] = useState(generateInitialState());
-  const [gameState, setGameState] = useState("playing");
+  const [pokemons, setPokemons] = useState(generateInitialState()); // Array of pokemon objects
+  // State: Tracks game status - "loading", "playing", "gameOver", "win", "error"
+  const [gameState, setGameState] = useState("loading");
   const [gameKey, setGameKey] = useState(0);
+  const [imagesLoaded, setImagesLoaded] = useState(0); // Counter for how many images have loaded
+  const [allImagesReady, setAllImagesReady] = useState(false); // Flag for when all images are loaded
 
+  // console.log(pokemons);
+
+  // Effect: Fetches all pokemon data when component mounts or game restarts
+  // Runs whenever 'gameKey' changes (on restart)
+  useEffect(() => {
+    const fetchAllPokemons = async () => {
+      setGameState("loading");
+      setImagesLoaded(0);
+      setAllImagesReady(false);
+
+      // Generate new pokemon IDs for this game
+      const initialState = generateInitialState();
+
+      // Create array of fetch promises for all pokemon
+      // Fetches all pokemon data in parallel
+      const pokemonPromises = initialState.map((pokemon) =>
+        fetch(`https://pokeapi.co/api/v2/pokemon/${pokemon.id}`).then((res) => res.json())
+      );
+
+      try {
+        const pokemonDataArray = await Promise.all(pokemonPromises);
+
+        // Merge fetched data with initial state structure
+        const pokemonsWithData = initialState.map((pokemon, index) => ({
+          ...pokemon,
+          data: pokemonDataArray[index], //! Add fetched Pokemon data
+        }));
+
+        // Update state with pokemon that now have data
+        setPokemons(pokemonsWithData);
+        setGameState("playing");
+      } catch (error) {
+        console.error("Failed to fetch pokemon:", error);
+        setGameState("error");
+      }
+    };
+
+    fetchAllPokemons();
+  }, [gameKey]); // Only re-run when gameKey changes (on restart)
+
+  // Effect: Checks if all images have finished loading
+  // When all images are loaded AND game is playing, set flag to display them
+  useEffect(() => {
+    if (imagesLoaded === pokemonsCount && gameState === "playing") {
+      setAllImagesReady(true);
+    }
+  }, [imagesLoaded, pokemonsCount, gameState]);
+
+  //? Callback function passed to each Pokemon component
+  // Called when an individual image finishes loading
+  const handleImageLoad = () => {
+    setImagesLoaded((prev) => prev + 1);
+  };
+
+  // Restarts the game by incrementing gameKey
+  // This triggers the useEffect that fetches new pokemon
   const handleRestart = () => {
-    setPokemons(generateInitialState());
-    setGameState("playing");
     setGameKey((prev) => prev + 1);
   };
 
-  // const closeModal = () => {
-  //   setGameState("playing");
-  // };
+  if (gameState === "error") {
+    return (
+      <main>
+        <h1>Error loading Pokémon. Please refresh.</h1>
+      </main>
+    );
+  }
 
   return (
     <main>
-      {/* <div className="controls">
-        <button onClick={handleRestart}>Restart</button>
-      </div> */}
-
       <Score pokemons={pokemons} />
+
+      {!allImagesReady && gameState === "playing" && (
+        <h2>
+          Loading images... {imagesLoaded}/{pokemonsCount}
+        </h2>
+      )}
+
+      {gameState === "loading" && <h2>Loading Pokémon data...</h2>}
 
       <div className="card-container">
         {pokemons.map((pokemon) => {
+          if (!pokemon.data) return null;
+
           return (
             <Pokemon
-              key={`${pokemon.id}-${gameKey}`}
-              id={pokemon.id}
+              key={`${pokemon.id}-${gameKey}`} // Unique key ensures re-mount on restart
+              pokemon={pokemon} // Pass entire pokemon object
               setPokemons={setPokemons}
               setGameState={setGameState}
+              onImageLoad={handleImageLoad} // Callback when image loads
+              showImage={allImagesReady} // Boolean to control opacity transition
             />
           );
         })}
       </div>
 
-      {/* //? maybe remove since we have modal? */}
       {gameState === "gameOver" ? <h1>Game Over!</h1> : null}
       {gameState === "win" ? <h1>You Win!!!</h1> : null}
 
