@@ -1,12 +1,15 @@
-import { Pokemon } from "./Cards.jsx";
-import { Score } from "./Score.jsx";
-import { Modal } from "./Modal.jsx";
-import { useState, useEffect } from "react";
+import { Pokemon } from "./Cards.tsx";
+import { Score } from "./Score.tsx";
+import { Modal } from "./Modal.tsx";
+import { useState, useEffect, useRef } from "react";
+
+export type GameState = "loading" | "playing" | "gameOver" | "win" | "error";
 
 // Generates an array of unique random IDs within a range
 // Used to select random Pokemon from the API (1-386 are Gen 1-3 Pokemon)
-function generateUniqueIds(count, max) {
-  const ids = new Set();
+function generateUniqueIds(count: number, max: number): number[] {
+  //! if Set without parameter it will be unknown
+  const ids = new Set<number>();
   while (ids.size < count) {
     ids.add(Math.floor(Math.random() * max) + 1);
   }
@@ -20,6 +23,7 @@ function MainContent() {
   // Each pokemon starts with an ID, clicked status, and null data (to be fetched)
   const generateInitialState = () => {
     const uniqueIds = generateUniqueIds(pokemonsCount, 386);
+    // console.log(uniqueIds); //! test
     return uniqueIds.map((id) => ({
       id: id,
       clicked: false,
@@ -29,20 +33,24 @@ function MainContent() {
 
   const [pokemons, setPokemons] = useState(generateInitialState()); // Array of pokemon objects
   // State: Tracks game status - "loading", "playing", "gameOver", "win", "error"
-  const [gameState, setGameState] = useState("loading");
+  const [gameState, setGameState] = useState<GameState>("loading");
   const [gameKey, setGameKey] = useState(0);
   const [imagesLoaded, setImagesLoaded] = useState(0); // Counter for how many images have loaded
   const [allImagesReady, setAllImagesReady] = useState(false); // Flag for when all images are loaded
+  const loadedIdsRef = useRef<Set<number>>(new Set());
 
-  // console.log(pokemons);
+  console.log(pokemons);
 
   // Effect: Fetches all pokemon data when component mounts or game restarts
   // Runs whenever 'gameKey' changes (on restart)
   useEffect(() => {
+    let cancelled = false; // Cancellation flag
+
     const fetchAllPokemons = async () => {
       setGameState("loading");
       setImagesLoaded(0);
       setAllImagesReady(false);
+      loadedIdsRef.current = new Set(); //? Reset on new game
 
       // Generate new pokemon IDs for this game
       const initialState = generateInitialState();
@@ -54,7 +62,11 @@ function MainContent() {
       );
 
       try {
+        // if (cancelled) return;
         const pokemonDataArray = await Promise.all(pokemonPromises);
+
+        // Only update state if not cancelled
+        if (cancelled) return;
 
         // Merge fetched data with initial state structure
         const pokemonsWithData = initialState.map((pokemon, index) => ({
@@ -72,20 +84,38 @@ function MainContent() {
     };
 
     fetchAllPokemons();
+
+    // Cleanup function - runs when effect re-runs or component unmounts
+    return () => {
+      cancelled = true;
+    };
   }, [gameKey]); // Only re-run when gameKey changes (on restart)
 
   // Effect: Checks if all images have finished loading
   // When all images are loaded AND game is playing, set flag to display them
   useEffect(() => {
-    if (imagesLoaded === pokemonsCount && gameState === "playing") {
+    if (imagesLoaded >= pokemonsCount && gameState === "playing") {
       setAllImagesReady(true);
     }
-  }, [imagesLoaded, pokemonsCount, gameState]);
+    // console.log(imagesLoaded); //! test
+  }, [imagesLoaded, gameState]);
 
   //? Callback function passed to each Pokemon component
   // Called when an individual image finishes loading
-  const handleImageLoad = () => {
-    setImagesLoaded((prev) => prev + 1);
+  // const handleImageLoad = () => {
+  //   setImagesLoaded((prev) => prev + 1);
+  // };
+  const handleImageLoad = (pokemonId: number) => {
+    console.log(
+      `Image load called for ID: ${pokemonId}, already loaded:`,
+      loadedIdsRef.current.has(pokemonId)
+    );
+    if (!loadedIdsRef.current.has(pokemonId)) {
+      loadedIdsRef.current.add(pokemonId);
+      //? setImagesLoaded((prev) => prev + 1);
+      setImagesLoaded(loadedIdsRef.current.size);
+      console.log(`Total loaded: ${loadedIdsRef.current.size}`);
+    }
   };
 
   // Restarts the game by incrementing gameKey
@@ -124,8 +154,8 @@ function MainContent() {
               pokemon={pokemon} // Pass entire pokemon object
               setPokemons={setPokemons}
               setGameState={setGameState}
-              onImageLoad={handleImageLoad} // Callback when image loads
-              showImage={allImagesReady} // Boolean to control opacity transition
+              handleImageLoad={handleImageLoad} // Callback when image loads
+              allImagesReady={allImagesReady} // Boolean to control opacity transition
             />
           );
         })}

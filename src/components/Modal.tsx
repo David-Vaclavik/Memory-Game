@@ -1,6 +1,12 @@
 import "../styles/Modal.css";
 
-function Modal({ isOpen, title, children }) {
+type ModalProps = {
+  isOpen: boolean;
+  title: string;
+  children: React.ReactNode;
+};
+
+function Modal({ isOpen, title, children }: ModalProps) {
   if (!isOpen) return null;
 
   return (
