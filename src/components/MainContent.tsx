@@ -49,6 +49,7 @@ function MainContent() {
           ...pokemon,
           data: pokemonDataArray[index], //! Add fetched Pokemon data
         }));
+        console.log(pokemonsWithData);
 
         // Update state with pokemon that now have data
         setPokemons(pokemonsWithData);
@@ -56,6 +57,12 @@ function MainContent() {
       } catch (error) {
         console.error("Failed to fetch pokemon:", error);
         setGameState("error");
+      } finally {
+        // This runs whether try succeeds or catch runs
+        // Good for cleanup like hiding loading spinners
+        console.log("Fetch attempt completed");
+        // console.log(pokemons.data);
+        // console.log(pokemonsWithData);
       }
     };
 

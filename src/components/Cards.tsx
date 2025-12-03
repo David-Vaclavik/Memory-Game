@@ -2,22 +2,28 @@ import { useRef, useState } from "react";
 import type { GameState } from "./MainContent";
 import { shuffleArray } from "../utils/shuffleArray";
 
-interface Pokemon {
+export interface PokemonApiData {
   id: number;
-  clicked: boolean;
-  data: any;
+  name: string;
+  sprites: {
+    front_default: string;
+  };
 }
 
-// type GameState = "loading" | "playing" | "gameOver" | "win" | "error";
+export interface Pokemon {
+  id: number;
+  clicked: boolean;
+  data: PokemonApiData | null;
+}
 
 interface PokemonProps {
   pokemon: Pokemon;
   setPokemons: React.Dispatch<React.SetStateAction<Pokemon[]>>;
   setGameState: React.Dispatch<React.SetStateAction<GameState>>;
-  // handleImageLoad: () => void;
-  handleImageLoad: (id: number) => void; // Accept ID parameter
+  handleImageLoad: (id: number) => void;
   allImagesReady: boolean;
 }
+
 export function Pokemon({
   pokemon,
   setPokemons,
@@ -30,7 +36,7 @@ export function Pokemon({
   const hasLoadedRef = useRef(false);
 
   const handleClick = () => {
-    //! console.log(`Clicked ${pokemon.data.name} with ID: ${pokemon.id}`);
+    //! console.log(`Clicked ${pokemon.data.name} with ID: ${pokemon.id}`)
     let gameOver = false;
     let hasWon = false;
 
@@ -40,10 +46,11 @@ export function Pokemon({
           if (item.clicked === true) {
             setGameState("gameOver");
             gameOver = true;
-            // return item;
           }
+
           return { ...item, clicked: true };
         }
+
         return item;
       });
 
@@ -79,6 +86,9 @@ export function Pokemon({
     hasLoadedRef.current = true;
     handleImageLoad(pokemon.id);
   };
+
+  // Add null check - don't render if data isn't loaded yet
+  if (!pokemon.data) return null;
 
   return (
     <div className="card">

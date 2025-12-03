@@ -1,22 +1,15 @@
 import { useState } from "react";
-
-interface Pokemon {
-  id: number;
-  clicked: boolean;
-  data: any;
-}
+import type { Pokemon } from "./Cards";
 
 interface ScoreProps {
   pokemons: Pokemon[];
 }
 
 function Score({ pokemons }: ScoreProps) {
-  const clickedCount = pokemons.filter((pokemon) => pokemon.clicked === true).length;
   const [highScore, setHighScore] = useState<number>(0);
+  const clickedCount = pokemons.filter((pokemon) => pokemon.clicked === true).length;
 
   if (clickedCount > highScore) setHighScore(clickedCount);
-
-  //! setHighScore("s");
 
   return (
     <div className="score">

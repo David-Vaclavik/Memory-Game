@@ -1,3 +1,5 @@
+import type { Pokemon } from "../components/Cards";
+
 // Generates an array of unique random IDs within a range
 // Used to select random Pokemon from the API (1-386 are Gen 1-3 Pokemon)
 function generateUniqueIds(count: number, max: number): number[] {
@@ -10,8 +12,9 @@ function generateUniqueIds(count: number, max: number): number[] {
 
 // Creates initial state structure for pokemon array
 // Each pokemon starts with an ID, clicked status, and null data (to be fetched)
+//* count - number of pokemon cards to show
 //* maxId - ids of pokemons to choose from
-export function generateInitialState(count: number, maxId: number = 386) {
+export function generateInitialState(count: number, maxId: number = 386): Pokemon[] {
   const uniqueIds = generateUniqueIds(count, maxId);
   return uniqueIds.map((id) => ({
     id: id,
