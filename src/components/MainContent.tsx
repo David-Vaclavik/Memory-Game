@@ -39,7 +39,7 @@ function MainContent() {
   const [allImagesReady, setAllImagesReady] = useState(false); // Flag for when all images are loaded
   const loadedIdsRef = useRef<Set<number>>(new Set());
 
-  console.log(pokemons);
+  // console.log(pokemons); //!
 
   // Effect: Fetches all pokemon data when component mounts or game restarts
   // Runs whenever 'gameKey' changes (on restart)
@@ -91,30 +91,22 @@ function MainContent() {
     };
   }, [gameKey]); // Only re-run when gameKey changes (on restart)
 
-  // Effect: Checks if all images have finished loading
-  // When all images are loaded AND game is playing, set flag to display them
-  useEffect(() => {
-    if (imagesLoaded >= pokemonsCount && gameState === "playing") {
-      setAllImagesReady(true);
-    }
-    // console.log(imagesLoaded); //! test
-  }, [imagesLoaded, gameState]);
-
   //? Callback function passed to each Pokemon component
   // Called when an individual image finishes loading
-  // const handleImageLoad = () => {
-  //   setImagesLoaded((prev) => prev + 1);
-  // };
   const handleImageLoad = (pokemonId: number) => {
-    console.log(
-      `Image load called for ID: ${pokemonId}, already loaded:`,
-      loadedIdsRef.current.has(pokemonId)
-    );
+    // console.log(
+    //   `Image load called for ID: ${pokemonId}, already loaded:`,
+    //   loadedIdsRef.current.has(pokemonId)
+    // );
     if (!loadedIdsRef.current.has(pokemonId)) {
       loadedIdsRef.current.add(pokemonId);
-      //? setImagesLoaded((prev) => prev + 1);
       setImagesLoaded(loadedIdsRef.current.size);
       console.log(`Total loaded: ${loadedIdsRef.current.size}`);
+
+      //* Check if all images are loaded using the Set size
+      if (loadedIdsRef.current.size >= pokemonsCount && gameState === "playing") {
+        setAllImagesReady(true);
+      }
     }
   };
 

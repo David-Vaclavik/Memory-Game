@@ -24,7 +24,7 @@ export function Pokemon({
   handleImageLoad,
   allImagesReady,
 }: PokemonProps) {
-  const [imageLoaded, setImageLoaded] = useState(false);
+  // const [imageLoaded, setImageLoaded] = useState(false);
 
   const hasLoadedRef = useRef(false);
 
@@ -39,7 +39,7 @@ export function Pokemon({
           if (item.clicked === true) {
             setGameState("gameOver");
             gameOver = true;
-            return item;
+            // return item;
           }
           return { ...item, clicked: true };
         }
@@ -55,6 +55,7 @@ export function Pokemon({
 
       // Don't shuffle if gameOver OR won
       if (gameOver || hasWon) return updatedPokemons;
+      // if (gameOver || hasWon) return updatedPokemons;
 
       // Only shuffle during normal gameplay
       return shuffleArray(updatedPokemons);
@@ -80,11 +81,6 @@ export function Pokemon({
     //   handleImageLoad();
     // }
 
-    // if (!hasLoadedRef.current) {
-    //   hasLoadedRef.current = true;
-    //   handleImageLoad(pokemon.id);
-    // }
-
     if (hasLoadedRef.current) {
       console.log(`Ignoring duplicate load for ${pokemon.id}`);
       return;
@@ -104,7 +100,6 @@ export function Pokemon({
           style={{
             width: "192px",
             height: "192px",
-            // opacity: allImagesReady && imageLoaded ? 1 : 0,
             opacity: allImagesReady === true ? 1 : 0,
             transition: "opacity 0.5s ease",
           }}
