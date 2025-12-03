@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import type { GameState } from "./MainContent";
+import { shuffleArray } from "../utils/shuffleArray";
 
 interface Pokemon {
   id: number;
@@ -61,18 +62,6 @@ export function Pokemon({
       return shuffleArray(updatedPokemons);
     });
   };
-
-  //? maybe to utils.ts ?
-  // Helper function to shuffle array
-  //TODO: better type than any[]
-  function shuffleArray(array: any[]) {
-    const shuffled = [...array];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    return shuffled;
-  }
 
   const handleImageLoadComplete = () => {
     // if (!imageLoaded) {

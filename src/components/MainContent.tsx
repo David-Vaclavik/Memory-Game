@@ -2,37 +2,14 @@ import { Pokemon } from "./Cards.tsx";
 import { Score } from "./Score.tsx";
 import { Modal } from "./Modal.tsx";
 import { useState, useEffect, useRef } from "react";
+import { generateInitialState } from "../utils/pokemonUtils.ts";
 
 export type GameState = "loading" | "playing" | "gameOver" | "win" | "error";
-
-// Generates an array of unique random IDs within a range
-// Used to select random Pokemon from the API (1-386 are Gen 1-3 Pokemon)
-function generateUniqueIds(count: number, max: number): number[] {
-  //! if Set without parameter it will be unknown
-  const ids = new Set<number>();
-  while (ids.size < count) {
-    ids.add(Math.floor(Math.random() * max) + 1);
-  }
-  return Array.from(ids);
-}
 
 function MainContent() {
   const pokemonsCount = 12; // Total number of Pokemon cards in the game
 
-  // Creates initial state structure for pokemon array
-  // Each pokemon starts with an ID, clicked status, and null data (to be fetched)
-  const generateInitialState = () => {
-    const uniqueIds = generateUniqueIds(pokemonsCount, 386);
-    // console.log(uniqueIds); //! test
-    return uniqueIds.map((id) => ({
-      id: id,
-      clicked: false,
-      data: null,
-    }));
-  };
-
-  const [pokemons, setPokemons] = useState(generateInitialState()); // Array of pokemon objects
-  // State: Tracks game status - "loading", "playing", "gameOver", "win", "error"
+  const [pokemons, setPokemons] = useState(generateInitialState(pokemonsCount)); // Array of pokemon objects
   const [gameState, setGameState] = useState<GameState>("loading");
   const [gameKey, setGameKey] = useState(0);
   const [imagesLoaded, setImagesLoaded] = useState(0); // Counter for how many images have loaded
@@ -53,7 +30,7 @@ function MainContent() {
       loadedIdsRef.current = new Set(); //? Reset on new game
 
       // Generate new pokemon IDs for this game
-      const initialState = generateInitialState();
+      const initialState = generateInitialState(pokemonsCount);
 
       // Create array of fetch promises for all pokemon
       // Fetches all pokemon data in parallel
@@ -62,7 +39,6 @@ function MainContent() {
       );
 
       try {
-        // if (cancelled) return;
         const pokemonDataArray = await Promise.all(pokemonPromises);
 
         // Only update state if not cancelled
@@ -92,7 +68,7 @@ function MainContent() {
   }, [gameKey]); // Only re-run when gameKey changes (on restart)
 
   //? Callback function passed to each Pokemon component
-  // Called when an individual image finishes loading
+  // Called when an individual image finishes loading - onLoad
   const handleImageLoad = (pokemonId: number) => {
     // console.log(
     //   `Image load called for ID: ${pokemonId}, already loaded:`,
