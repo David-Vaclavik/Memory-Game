@@ -3,78 +3,25 @@ import { Score } from "./Score.tsx";
 import { Modal } from "./Modal.tsx";
 import { useState, useEffect, useRef } from "react";
 import { generateInitialState } from "../utils/pokemonUtils.ts";
+import { useFetchPokemons } from "../hooks/useFetchPokemons.ts";
 
 export type GameState = "loading" | "playing" | "gameOver" | "win" | "error";
 
 function MainContent() {
-  const pokemonsCount = 12; // Total number of Pokemon cards in the game
-
-  const [pokemons, setPokemons] = useState(generateInitialState(pokemonsCount)); // Array of pokemon objects
-  const [gameState, setGameState] = useState<GameState>("loading");
   const [gameKey, setGameKey] = useState(0);
   const [imagesLoaded, setImagesLoaded] = useState(0); // Counter for how many images have loaded
   const [allImagesReady, setAllImagesReady] = useState(false); // Flag for when all images are loaded
   const loadedIdsRef = useRef<Set<number>>(new Set());
 
+  const pokemonsCount = 12; // Total number of Pokemon cards in the game
+  const { gameState, setGameState, pokemons, setPokemons } = useFetchPokemons(
+    gameKey,
+    pokemonsCount
+  );
+
   // console.log(pokemons); //!
 
-  // Effect: Fetches all pokemon data when component mounts or game restarts
-  // Runs whenever 'gameKey' changes (on restart)
-  useEffect(() => {
-    let cancelled = false; // Cancellation flag
-
-    const fetchAllPokemons = async () => {
-      setGameState("loading");
-      setImagesLoaded(0);
-      setAllImagesReady(false);
-      loadedIdsRef.current = new Set(); //? Reset on new game
-
-      // Generate new pokemon IDs for this game
-      const initialState = generateInitialState(pokemonsCount);
-
-      // Create array of fetch promises for all pokemon
-      // Fetches all pokemon data in parallel
-      const pokemonPromises = initialState.map((pokemon) =>
-        fetch(`https://pokeapi.co/api/v2/pokemon/${pokemon.id}`).then((res) => res.json())
-      );
-
-      try {
-        const pokemonDataArray = await Promise.all(pokemonPromises);
-
-        // Only update state if not cancelled
-        if (cancelled) return;
-
-        // Merge fetched data with initial state structure
-        const pokemonsWithData = initialState.map((pokemon, index) => ({
-          ...pokemon,
-          data: pokemonDataArray[index], //! Add fetched Pokemon data
-        }));
-        console.log(pokemonsWithData);
-
-        // Update state with pokemon that now have data
-        setPokemons(pokemonsWithData);
-        setGameState("playing");
-      } catch (error) {
-        console.error("Failed to fetch pokemon:", error);
-        setGameState("error");
-      } finally {
-        // This runs whether try succeeds or catch runs
-        // Good for cleanup like hiding loading spinners
-        console.log("Fetch attempt completed");
-        // console.log(pokemons.data);
-        // console.log(pokemonsWithData);
-      }
-    };
-
-    fetchAllPokemons();
-
-    // Cleanup function - runs when effect re-runs or component unmounts
-    return () => {
-      cancelled = true;
-    };
-  }, [gameKey]); // Only re-run when gameKey changes (on restart)
-
-  //? Callback function passed to each Pokemon component
+  // Callback function passed to each Pokemon component
   // Called when an individual image finishes loading - onLoad
   const handleImageLoad = (pokemonId: number) => {
     // console.log(
@@ -96,6 +43,11 @@ function MainContent() {
   // Restarts the game by incrementing gameKey
   // This triggers the useEffect that fetches new pokemon
   const handleRestart = () => {
+    setGameState("loading");
+    setImagesLoaded(0);
+    setAllImagesReady(false);
+    loadedIdsRef.current = new Set(); //? Reset on new game
+
     setGameKey((prev) => prev + 1);
   };
 

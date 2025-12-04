@@ -32,15 +32,14 @@ export function Pokemon({
   allImagesReady,
 }: PokemonProps) {
   // const [imageLoaded, setImageLoaded] = useState(false);
-
   const hasLoadedRef = useRef(false);
 
   const handleClick = () => {
     //! console.log(`Clicked ${pokemon.data.name} with ID: ${pokemon.id}`)
-    let gameOver = false;
-    let hasWon = false;
 
     setPokemons((prev) => {
+      let gameOver = false;
+
       const updatedPokemons = prev.map((item) => {
         if (item.id === pokemon.id) {
           if (item.clicked === true) {
@@ -58,12 +57,11 @@ export function Pokemon({
       const clickedCount = updatedPokemons.filter((p) => p.clicked).length;
       if (clickedCount === updatedPokemons.length) {
         setGameState("win");
-        hasWon = true;
+        return updatedPokemons;
       }
 
       // Don't shuffle if gameOver OR won
-      if (gameOver || hasWon) return updatedPokemons;
-      // if (gameOver || hasWon) return updatedPokemons;
+      if (gameOver) return updatedPokemons;
 
       // Only shuffle during normal gameplay
       return shuffleArray(updatedPokemons);
@@ -71,12 +69,7 @@ export function Pokemon({
   };
 
   const handleImageLoadComplete = () => {
-    // if (!imageLoaded) {
-    //   setImageLoaded(true);
-    //   // adds +1 to image counter in parent - setImagesLoaded +1
-    //   handleImageLoad();
-    // }
-
+    // check if already loaded with onLoad
     if (hasLoadedRef.current) {
       console.log(`Ignoring duplicate load for ${pokemon.id}`);
       return;
