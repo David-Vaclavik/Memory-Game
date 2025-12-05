@@ -1,14 +1,14 @@
 import { Pokemon } from "./Cards.tsx";
 import { Score } from "./Score.tsx";
 import { Modal } from "./Modal.tsx";
-import { useState, useEffect, useRef } from "react";
-import { generateInitialState } from "../utils/pokemonUtils.ts";
+import { useState, useRef } from "react";
 import { useFetchPokemons } from "../hooks/useFetchPokemons.ts";
 
 export type GameState = "loading" | "playing" | "gameOver" | "win" | "error";
 
 function MainContent() {
   const [gameKey, setGameKey] = useState(0);
+  //! State to track count of loaded images - currently not used for display
   const [imagesLoaded, setImagesLoaded] = useState(0); // Counter for how many images have loaded
   const [allImagesReady, setAllImagesReady] = useState(false); // Flag for when all images are loaded
   const loadedIdsRef = useRef<Set<number>>(new Set());
@@ -24,10 +24,6 @@ function MainContent() {
   // Callback function passed to each Pokemon component
   // Called when an individual image finishes loading - onLoad
   const handleImageLoad = (pokemonId: number) => {
-    // console.log(
-    //   `Image load called for ID: ${pokemonId}, already loaded:`,
-    //   loadedIdsRef.current.has(pokemonId)
-    // );
     if (!loadedIdsRef.current.has(pokemonId)) {
       loadedIdsRef.current.add(pokemonId);
       setImagesLoaded(loadedIdsRef.current.size);
@@ -42,13 +38,20 @@ function MainContent() {
 
   // Restarts the game by incrementing gameKey
   // This triggers the useEffect that fetches new pokemon
+  //! Reset all values needed for a fresh game
   const handleRestart = () => {
+    console.log("handleRestart started - 1");
+
     setGameState("loading");
     setImagesLoaded(0);
     setAllImagesReady(false);
     loadedIdsRef.current = new Set(); //? Reset on new game
 
+    //!CRITICAL FIX: Clear pokemons immediately to prevent "Ghost Render" of old data with new key
+    setPokemons([]);
+
     setGameKey((prev) => prev + 1);
+    console.log("handleRestart started - 5");
   };
 
   if (gameState === "error") {
@@ -63,13 +66,13 @@ function MainContent() {
     <main>
       <Score pokemons={pokemons} />
 
-      {!allImagesReady && gameState === "playing" && (
+      {/* {!allImagesReady && gameState === "playing" && (
         <h2>
           Loading images... {imagesLoaded}/{pokemonsCount}
         </h2>
-      )}
+      )} */}
 
-      {gameState === "loading" && <h2>Loading Pokémon data...</h2>}
+      {/* {gameState === "loading" && <h2>Loading Pokémon data...</h2>} */}
 
       <div className="card-container">
         {pokemons.map((pokemon) => {

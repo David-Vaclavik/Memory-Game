@@ -8,8 +8,10 @@ export function useFetchPokemons(gameKey: number, pokemonsCount: number) {
 
   // Effect: Fetches all pokemon data when component mounts or game restarts
   // Runs whenever 'gameKey' changes (on restart)
+  // console.log("handleRestart started TOP level");
   useEffect(() => {
     let cancelled = false; // Cancellation flag
+    // console.log("useFetchPokemons started in useEffect");
 
     const fetchAllPokemons = async () => {
       // initValues(); - set in handleRestart

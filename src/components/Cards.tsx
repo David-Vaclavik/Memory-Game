@@ -31,7 +31,6 @@ export function Pokemon({
   handleImageLoad,
   allImagesReady,
 }: PokemonProps) {
-  // const [imageLoaded, setImageLoaded] = useState(false);
   const hasLoadedRef = useRef(false);
 
   const handleClick = () => {
@@ -85,7 +84,13 @@ export function Pokemon({
 
   return (
     <div className="card">
-      <button onClick={handleClick}>
+      <button
+        onClick={handleClick}
+        // style={{
+        //   opacity: allImagesReady === true ? 1 : 0,
+        //   transition: "opacity 0.5s ease",
+        // }}
+      >
         <img
           src={pokemon.data.sprites.front_default}
           alt={pokemon.data.name}
@@ -97,7 +102,14 @@ export function Pokemon({
           }}
           onLoad={handleImageLoadComplete}
         />
-        <h2>{pokemon.data.name}</h2>
+        <h2
+          style={{
+            opacity: allImagesReady === true ? 1 : 0,
+            transition: "opacity 0.5s ease",
+          }}
+        >
+          {pokemon.data.name}
+        </h2>
       </button>
     </div>
   );
